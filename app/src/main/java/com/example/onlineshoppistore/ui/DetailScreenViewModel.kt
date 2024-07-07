@@ -1,4 +1,5 @@
 package com.example.onlineshoppistore.ui
+
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -14,9 +15,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DetailScreenViewModel@Inject constructor (private val savedStateHandle: SavedStateHandle,) : ViewModel() {
-    private var productPrice :String = ""
-    private var productId:String = ""
+class DetailScreenViewModel @Inject constructor(private val savedStateHandle: SavedStateHandle) :
+    ViewModel() {
+    private var productPrice: String = ""
+    private var productId: String = ""
     private val productStateFlow = MutableStateFlow<Product>(Product())
     val productState: StateFlow<Product> = productStateFlow
 
@@ -32,7 +34,7 @@ class DetailScreenViewModel@Inject constructor (private val savedStateHandle: Sa
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    data class ErrorState(val state:Boolean=false,val message: String="")
+    data class ErrorState(val state: Boolean = false, val message: String = "")
 
     sealed class UiEvent {
         data class ShowSnackbar(val message: String) : UiEvent()
@@ -41,6 +43,7 @@ class DetailScreenViewModel@Inject constructor (private val savedStateHandle: Sa
         data object Success : UiEvent()
 
     }
+
     private val api = ApiService()
 
     init {
@@ -79,71 +82,80 @@ productsStateFlow.value = it.data
         }*/
             }
         }
-        savedStateHandle.get<String>("price").let {price->
+        savedStateHandle.get<String>("price").let { price ->
             if (price != null) {
-             productPrice = price
+                productPrice = price
             }
         }
     }
-        fun fetchProduct(id:String=productId) {
-            viewModelScope.launch {
-                val result = api.getProduct(id/*"776a77353cd341db8cf8d07144b63b19"*/)
-              //  Log.d("ViewModel", "${api.getProduct("776a77353cd341db8cf8d07144b63b19")}")
 
-                    when(result){
-                        is ProductState.Error -> {
-                            _eventFlow.emit(UiEvent.ShowSnackbar(result.errorMessage))
-                            productLoadingFlow.value = false
-                            productErrorFlow.value = ErrorState(state = true, message = result.errorMessage)
-                        }
-                        ProductState.Loading -> {
-                            _eventFlow.emit(UiEvent.Loading)
-                            productLoadingFlow.value = true
-                            productErrorFlow.value = ErrorState()
-                        }
-                        is ProductState.Success -> {
-                            productStateFlow.value = Product(
-
-                                name = result.data.name, price = productPrice,
-                                description = result.data.description,
-                                imageUrl = result.data.photos[0].url
-                            )
-                            _eventFlow.emit(UiEvent.Success)
-                            productLoadingFlow.value = false
-                            productErrorFlow.value = ErrorState()
-                        }
-                    }
-
-            }
-        }
-        /*  fun fetchProducts() {
-
+    fun fetchProduct(id: String = productId) {
         viewModelScope.launch {
+            val result = api.getProduct(id/*"776a77353cd341db8cf8d07144b63b19"*/)
+            //  Log.d("ViewModel", "${api.getProduct("776a77353cd341db8cf8d07144b63b19")}")
 
-            val result = api.getProducts()
-            result.collect{
+            when (result) {
+                is ProductState.Error -> {
+                    _eventFlow.emit(UiEvent.ShowSnackbar(result.errorMessage))
+                    productLoadingFlow.value = false
+                    productErrorFlow.value = ErrorState(state = true, message = result.errorMessage)
+                }
 
-                when(it){
-                    is ProductsState.Error -> {
-                        _eventFlow.emit(UiEvent.ShowSnackbar(it.errorMessage))
-                        productLoadingFlow.value = false
-                        productErrorFlow.value = ErrorState(state = true, message = it.errorMessage)
-                    }
-                    ProductsState.Loading -> {
-                        _eventFlow.emit(UiEvent.Loading)
-                        productLoadingFlow.value = true
-                        productErrorFlow.value = ErrorState()
-                    }
-                    is ProductsState.Success -> {
-                        productsStateFlow.value = it.data
-                        _eventFlow.emit(UiEvent.Success)
-                        productLoadingFlow.value = false
-                        productErrorFlow.value = ErrorState()
-                    }
+                ProductState.Loading -> {
+                    _eventFlow.emit(UiEvent.Loading)
+                    productLoadingFlow.value = true
+                    productErrorFlow.value = ErrorState()
+                }
+
+                is ProductState.Success -> {
+                    productStateFlow.value = Product(
+
+                        name = result.data.name, price = productPrice,
+                        description = result.data.description,
+                        imageUrl = result.data.photos[0].url
+                    )
+                    _eventFlow.emit(UiEvent.Success)
+                    productLoadingFlow.value = false
+                    productErrorFlow.value = ErrorState()
                 }
             }
 
         }
-    }*/
-data class Product(val name:String ="",val price:String="", val description:String="",val imageUrl:String = "")
+    }
+
+    /*  fun fetchProducts() {
+
+    viewModelScope.launch {
+
+        val result = api.getProducts()
+        result.collect{
+
+            when(it){
+                is ProductsState.Error -> {
+                    _eventFlow.emit(UiEvent.ShowSnackbar(it.errorMessage))
+                    productLoadingFlow.value = false
+                    productErrorFlow.value = ErrorState(state = true, message = it.errorMessage)
+                }
+                ProductsState.Loading -> {
+                    _eventFlow.emit(UiEvent.Loading)
+                    productLoadingFlow.value = true
+                    productErrorFlow.value = ErrorState()
+                }
+                is ProductsState.Success -> {
+                    productsStateFlow.value = it.data
+                    _eventFlow.emit(UiEvent.Success)
+                    productLoadingFlow.value = false
+                    productErrorFlow.value = ErrorState()
+                }
+            }
+        }
+
+    }
+}*/
+    data class Product(
+        val name: String = "",
+        val price: String = "",
+        val description: String = "",
+        val imageUrl: String = ""
+    )
 }

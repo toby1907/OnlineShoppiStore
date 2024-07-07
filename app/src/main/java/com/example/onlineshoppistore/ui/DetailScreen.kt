@@ -97,108 +97,111 @@ fun ProductContent(modifier: Modifier=Modifier,viewModel: DetailScreenViewModel)
             )
         }
     }
-    Column(
-        modifier =
-        modifier
-            .fillMaxSize(),
+   if (!loadingState&&!errorState.state) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(start = 8.dp)
+            ,
 
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AsyncImage(
-            modifier = Modifier
-                .width(337.dp)
-                .height(193.dp)
-                .padding(top = 16.dp),
-            model = "https://api.timbu.cloud/images/${product.imageUrl}",
-            contentDescription = null,
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.padding(16.dp))
-            Column(
-                modifier = Modifier.padding(top = 16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-
-                Text(
-                    text = product.name,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 16.dp)
+           Column(horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AsyncImage(
+                    modifier = Modifier
+                        .width(337.dp)
+                        .height(193.dp)
+                        .padding(top = 16.dp),
+                    model = "https://api.timbu.cloud/images/${product.imageUrl}",
+                    contentDescription = null,
                 )
-                Text(
-                    text = "Sneakers",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column() {
-                Row() {
-
-                    Column(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .size(width = 200.dp, height = 400.dp)
-                        ,
-                    ) {
-                        Text(
-                            text = "Structure:",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = product.description,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-
-                    }
 
 
-                    Surface(
-                        modifier = Modifier
-                            .size(99.dp, 157.dp)
-                            .clickable {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ) {
 
-                            }
-                        ,
-                        color = Color(0xff69bcfc),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Column(  modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Image(painter = painterResource(id = R.drawable.cart_icon), contentDescription = "")
-                            Spacer(modifier = Modifier.padding(16.dp))
-                            Text(
-                                text = product.price,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight(600),
-                                color = Color(0xFFFFFFFF)
-                            )
-                        }
 
-                    }
+                    Text(
+                        text = product.name,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                    Text(
+                        text = "Sneakers",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
+
+
+            Spacer(modifier = Modifier.padding(8.dp))
+
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                        .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    ) {
+
+                        Column(
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .size(width = 240.dp, height = 400.dp),
+                        ) {
+                            Text(
+                                text = "Structure:",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = product.description,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+
+                        }
+
+Spacer(modifier = Modifier.size(8.dp))
+                        Surface(
+                            modifier = Modifier
+                                .size(99.dp, 157.dp)
+                                .clickable {
+
+                                },
+                            color = Color(0xff69bcfc),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.cart_icon),
+                                    contentDescription = ""
+                                )
+                                Spacer(modifier = Modifier.padding(16.dp))
+                                Text(
+                                    text = product.price + "NGN",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight(600),
+                                    color = Color(0xFFFFFFFF)
+                                )
+                            }
+
+                        }
+                    }
+
+
         }
     }
 }

@@ -61,7 +61,7 @@ class ApiService {
                 ProductState.Error("Failed to fetch product data")
             }
         } catch (e: Exception) {
-            return ProductState.Error("Network error: ${e.message}")
+            return ProductState.Error("Network error: Ensure your internet is stable")
         }
     }
     suspend fun getProducts(): Flow<ProductsState> {
