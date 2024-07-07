@@ -16,7 +16,7 @@
             <li>Customize the looks as able</li>
         </ol>
         <h2>Screenshots</h2>
-        <img src="https://github.com/toby1907/Shoppi/blob/main/app/src/main/res/drawable/sc1.jpg" alt="Screenshot 1"> 
+        <img src="https://github.com/toby1907/Shoppi/blob/main/app/src/main/res/drawable/sc1" alt="Screenshot 1"> 
        <img src="https://github.com/toby1907/Shoppi/blob/main/app/src/main/res/drawable/sc2.jpg" alt="Screenshot 2"> 
          <img src="https://github.com/toby1907/Shoppi/blob/main/app/src/main/res/drawable/sc3.jpg" alt="Screenshot 3"> 
          <img src="https://github.com/toby1907/Shoppi/blob/main/app/src/main/res/drawable/sc4.jpg" alt="Screenshot 4"> 
