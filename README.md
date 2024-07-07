@@ -7,8 +7,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Shoppi</h1>
-        <p>Welcome to my simple Shoppi app! This app provides you will a list of shoes and their types to buy.</p>
+        <h1>OnlineShoppiStore</h1>
+        <p>Welcome to my simple OnlineShoppiStore app! This app provides you will a list of shoes and their types to buy.</p>
         <h2>Setup Instructions</h2>
         <ol>
             <li>Install the app from the link provided,if you haven't already.</li>
@@ -23,7 +23,7 @@
         <!-- Add more screenshots as needed -->
         <h2>Download</h2>
         <p>You can download the app from the following link:</p>
-        <a href="https://drive.google.com/file/d/1tA9cvmuIKgRkIHUhgRNXbgsKj9Xuz7UG/view?usp=drive_link">Download Shoppi App</a>
+        <a href="">OnlineShoppiStore App</a>
     </div>
 </body>
 </html>
