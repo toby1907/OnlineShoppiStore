@@ -66,7 +66,7 @@ data class CurrentPrice(
 
 sealed class ProductState {
     object Loading : ProductState()
-    data class Success(val data: ResponseItem) : ProductState()
+    data class Success(val data: Product) : ProductState()
     data class Error(val errorMessage: String) : ProductState()
 }
 sealed class ProductsState {

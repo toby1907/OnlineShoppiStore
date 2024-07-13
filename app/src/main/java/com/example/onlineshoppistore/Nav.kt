@@ -7,9 +7,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.onlineshoppistore.ui.AllProductScreen
+import com.example.onlineshoppistore.ui.CartScreen
 import com.example.onlineshoppistore.ui.DetailScreen
 import com.example.onlineshoppistore.ui.DetailScreenViewModel
 import com.example.onlineshoppistore.ui.HomeScreen
+import com.example.onlineshoppistore.ui.IndevelopmentScreen
+import com.example.onlineshoppistore.ui.ProductPage
 
 @Composable
 fun Nav(){
@@ -37,7 +41,19 @@ fun Nav(){
             )
         ){
 
-            DetailScreen(navController)
+            ProductPage(navController = navController)
+
+        }
+        composable(route = "cart"){
+            CartScreen(navController)
+
+        }
+        composable(route = "all"){
+            AllProductScreen(navController = navController)
+
+        }
+        composable(route = "info"){
+           IndevelopmentScreen(navController = navController)
 
         }
 

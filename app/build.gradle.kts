@@ -96,5 +96,9 @@ dependencies {
 
 //Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    //pager
+    implementation ("androidx.compose.foundation:foundation:1.4.3")
+    implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 }
 // Allow references to generated code

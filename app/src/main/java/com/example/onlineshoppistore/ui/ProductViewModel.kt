@@ -17,18 +17,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProductViewModel@Inject constructor() : ViewModel() {
-   /* private val _productState = MutableLiveData<ProductState>()
-    val productState: LiveData<ProductState> = _productState*/
 
-    private val productsStateFlow = MutableStateFlow<List<ResponseItem>>(emptyList())
+
+ /*   private val productsStateFlow = MutableStateFlow<List<ResponseItem>>(emptyList())
     val productsState: StateFlow<List<ResponseItem>> = productsStateFlow
 
     private val productLoadingFlow = MutableStateFlow(false)
     val productloading: StateFlow<Boolean> = productLoadingFlow
 
     private val api = ApiService()
-   /* private val retryStateFlow = MutableStateFlow(true)
-    val retryState: StateFlow<Boolean> = retryStateFlow*/
+   *//* private val retryStateFlow = MutableStateFlow(true)
+    val retryState: StateFlow<Boolean> = retryStateFlow*//*
 
     private val productErrorFlow = MutableStateFlow(ErrorState())
     val productError: StateFlow<ErrorState> = productErrorFlow
@@ -48,8 +47,7 @@ class ProductViewModel@Inject constructor() : ViewModel() {
 
 
     init {
-//       fetchProduct()
-     // fetchProducts()
+
         viewModelScope.launch {
 
             val result = api.getProducts()
@@ -105,5 +103,5 @@ productsStateFlow.value = it.data
             }
 
         }
-    }
+    }*/
 }

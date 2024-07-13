@@ -5,18 +5,33 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.onlineshoppistore.data.ApiService
+import com.example.onlineshoppistore.data.Photo
 import com.example.onlineshoppistore.data.ProductState
+import com.example.onlineshoppistore.data.ResponseItem
+import com.example.onlineshoppistore.network.ApiRepository
+import com.example.onlineshoppistore.network.DataState
+import com.example.onlineshoppistore.network.Status
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DetailScreenViewModel @Inject constructor(private val savedStateHandle: SavedStateHandle) :
+class DetailScreenViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
+    private val apiRepository: ApiRepository
+) :
     ViewModel() {
+    private val _products: MutableStateFlow<DataState<List<ResponseItem>>> =
+        MutableStateFlow(DataState.loading(data = null))
+    val products = _products.asStateFlow()
+
     private var productPrice: String = ""
     private var productId: String = ""
     private val productStateFlow = MutableStateFlow<Product>(Product())
@@ -44,7 +59,6 @@ class DetailScreenViewModel @Inject constructor(private val savedStateHandle: Sa
 
     }
 
-    private val api = ApiService()
 
     init {
 
@@ -87,12 +101,14 @@ productsStateFlow.value = it.data
                 productPrice = price
             }
         }
+fetchProducts()
+
     }
 
     fun fetchProduct(id: String = productId) {
         viewModelScope.launch {
-            val result = api.getProduct(id/*"776a77353cd341db8cf8d07144b63b19"*/)
-            //  Log.d("ViewModel", "${api.getProduct("776a77353cd341db8cf8d07144b63b19")}")
+            val result = apiRepository.getProduct(id/*"776a77353cd341db8cf8d07144b63b19"*/)
+            Log.d("ViewModel", "${apiRepository.getProduct("776a77353cd341db8cf8d07144b63b19")}")
 
             when (result) {
                 is ProductState.Error -> {
@@ -110,9 +126,9 @@ productsStateFlow.value = it.data
                 is ProductState.Success -> {
                     productStateFlow.value = Product(
 
-                        name = result.data.name, price = productPrice,
+                        name = result.data.name, price = result.data.currentPrice.toString(),
                         description = result.data.description,
-                        imageUrl = result.data.photos[0].url
+                        imageUrl = result.data.photos
                     )
                     _eventFlow.emit(UiEvent.Success)
                     productLoadingFlow.value = false
@@ -120,6 +136,20 @@ productsStateFlow.value = it.data
                 }
             }
 
+        }
+    }
+    fun fetchProducts() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (_products.value.status == Status.SUCCESS) {
+                // There is already data, update states consist of fetching while showing the old data
+                // Use copy for updating the status
+                _products.value = _products.value.copy(status = Status.UPDATING)
+                // Freezes 1 second in case of updating state
+                delay(1000)
+            }
+            apiRepository.getProducts().collect {
+                _products.value = it
+            }
         }
     }
 
@@ -156,6 +186,7 @@ productsStateFlow.value = it.data
         val name: String = "",
         val price: String = "",
         val description: String = "",
-        val imageUrl: String = ""
-    )
+        val imageUrl: List<Photo> = emptyList(),
+
+        )
 }

@@ -1,46 +1,22 @@
-package com.example.onlineshoppistore.data
+package com.example.onlineshoppistore.network
 
 import android.util.Log
+import com.example.onlineshoppistore.data.ProductState
+import com.example.onlineshoppistore.data.ProductsState
+import com.example.onlineshoppistore.data.ResponseItem
+import com.example.onlineshoppistore.data.ResponseItems
+import com.example.onlineshoppistore.data.RetrofitAPI
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
 
-interface RetrofitAPI {
-    @GET("products/{product_Id}")
-    suspend fun getProduct(
-        @Path("product_Id") productId: String,
-        @Query("Apikey") apiKey:String,
-       // @Query("product_id") productParam: String,
-        @Query("organization_id") orgId: String,
-        @Query("Appid") appId: String
-    ): Response<Product>
-
-    @GET("products")
-    fun getProducts(
-        @Query("Apikey") apiKey:String,
-        @Query("organization_id") organizationId: String,
-        @Query("Appid") appId: String
-    ): Call<ResponseItems>
-}
-
-class ApiService {
-
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://api.timbu.cloud/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-
-
+class ApiRepository(private val apiService: ApiService) {
     suspend fun getProduct(productId: String): ProductState {
-       val apiService: RetrofitAPI = retrofit.create(RetrofitAPI::class.java)
         try {
             val response = apiService.getProduct(
                 productId = productId,
@@ -61,12 +37,13 @@ class ApiService {
                 ProductState.Error("Failed to fetch product data")
             }
         } catch (e: Exception) {
-            return ProductState.Error("Network error: Ensure your internet is stable")
+            return ProductState.Error("${e.message}")
         }
     }
-    suspend fun getProducts(): Flow<ProductsState> {
-       val apiService: RetrofitAPI = retrofit.create(RetrofitAPI::class.java)
-        val responseFlow: MutableStateFlow<ProductsState> = MutableStateFlow(ProductsState.Loading)
+    // Fetches characters from the API and emits the state accordingly
+
+    fun getProducts(): Flow<DataState<List<ResponseItem>>> {
+        val responseFlow: MutableStateFlow<DataState<List<ResponseItem>>> = MutableStateFlow(DataState.loading())
         val request: Call<ResponseItems> = apiService.getProducts(
             apiKey = "239bc677748e4455970bc3a4b17253c920240704215822365525",
             organizationId = "97799f8a30e04f1eb0eb6a3819735af0",
@@ -78,14 +55,14 @@ class ApiService {
 
                 val responseItems: ResponseItems? = p1.body()
                 var items: List<ResponseItem> = responseItems?.items ?: mutableListOf()
-              if (items.isNotEmpty())  {
-                  responseFlow.value = ProductsState.Success(items)
-              }
+                if (items.isNotEmpty())  {
+                    responseFlow.value = DataState.success(items)
+                }
             }
 
             override fun onFailure(p0: Call<ResponseItems>, p1: Throwable) {
                 Log.d("API", "$p1")
-                responseFlow.value = ProductsState.Error("Network Error: Ensure your internet is stable")
+                responseFlow.value = DataState.error(error = p1, message = "check your network")
             }
 
         })
@@ -94,4 +71,3 @@ class ApiService {
 
     }
 }
-

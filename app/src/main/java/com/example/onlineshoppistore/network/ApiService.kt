@@ -1,5 +1,6 @@
 package com.example.onlineshoppistore.network
 
+import com.example.onlineshoppistore.data.Product
 import com.example.onlineshoppistore.data.ResponseItem
 import com.example.onlineshoppistore.data.ResponseItems
 import retrofit2.Call
@@ -10,8 +11,6 @@ import retrofit2.http.Query
 
 // Defines network API interface for Retrofit to fetch character data from the Rick and Morty API
 interface ApiService {
-    @GET("character") // Endpoint to get character list
-    suspend fun getCharacters(): ResponseItems // Asynchronously fetches characters
 
     @GET("products/{product_Id}")
     suspend fun getProduct(
@@ -20,12 +19,12 @@ interface ApiService {
         // @Query("product_id") productParam: String,
         @Query("organization_id") orgId: String,
         @Query("Appid") appId: String
-    ): ResponseItem
+    ): Response<Product>
 
     @GET("products")
     fun getProducts(
         @Query("Apikey") apiKey:String,
         @Query("organization_id") organizationId: String,
         @Query("Appid") appId: String
-    ): ResponseItems
+    ): Call<ResponseItems>
 }
