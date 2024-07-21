@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -66,12 +67,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.onlineshoppistore.R
 import com.example.onlineshoppistore.data.ResponseItem
 import com.example.onlineshoppistore.network.Status
+import com.example.onlineshoppistore.ui.cart.CartScreen
 import com.example.onlineshoppistore.ui.components.BottomNavPanel
+import com.example.onlineshoppistore.ui.order.MyOrderScreen
+import com.example.onlineshoppistore.ui.wishlist.WishlistScreen
+import com.example.onlineshoppistore.ui.wishlist.WishlistViewModel
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
@@ -82,29 +91,68 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navController: NavController,  /*viewModel: ProductViewModel = hiltViewModel()*/
+    navController: NavController, navController2: NavHostController ,
+    productsViewModel: ProductsViewModel ,
+    viewModel: WishlistViewModel ,
 ) {
+
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    Scaffold(modifier =  Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-           TopAppBar(
-                title = {  Image(painter = painterResource(id = R.drawable.ag_ezenard), contentDescription ="" )},
+            TopAppBar(
+                title = {
+                    Image(
+                        painter = painterResource(id = R.drawable.ag_ezenard),
+                        contentDescription = ""
+                    )
+                },
                 actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(painter = painterResource(id = R.drawable.search_01), contentDescription ="search" )
-                    }
+                   /* IconButton(onClick = { navController.navigate("wishlist") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.search_01),
+                            contentDescription = "search"
+                        )
+                    }*/
 
                 },
-               scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior
             )
         },
         bottomBar = {
-            BottomNavPanel(/*navController2=navController*/ navController)
+            BottomNavPanel(/*navController2=navController*/ navController2, viewModel)
         }
     )
     {
 
-        Content(modifier = Modifier.padding(it), navController = navController)
+        NavHost(
+            modifier = Modifier.padding(it),
+            navController = navController2,
+            startDestination = "home1"
+        ) {
+            composable(route = "home1"){
+                Content( navController = navController, productsViewModel = productsViewModel)
+
+            }
+            composable(route = "cart"){
+                CartScreen(navController,navController2)
+
+            }
+            composable(route = "all"){
+                AllProductScreen(navController = navController)
+
+            }
+            composable(route = "info"){
+                MyOrderScreen(navController = navController, navController2 = navController2)
+
+            }
+            composable(route = "wishlist"){
+                WishlistScreen(navController = navController,viewModel)
+
+            }
+
+        }
+    //    Content(modifier = Modifier.padding(it), navController = navController)
 
     }
 }
@@ -117,10 +165,12 @@ fun Content(
     navController: NavController,
     backgroundColor: Color = Color.Transparent,
     backgroundColorWhileUpdate: Color = Color.LightGray,
+    productsViewModel: ProductsViewModel
 ) {
     //   val scope = rememberCoroutineScope()
     //  val value = viewModel.productsState.collectAsState().value
-
+    val currentShoeBrand = remember { mutableStateOf(ShoeBrand.All) }
+    val lowercaseValue = currentShoeBrand.value.name.lowercase()
     var errorMessage: String = ""
 
 
@@ -130,7 +180,7 @@ fun Content(
     /*LaunchedEffect(retry.value) {
         viewModel.fetchProducts()
     }*/
-    val productsViewModel: ProductsViewModel = hiltViewModel()
+
 
     val dataState by productsViewModel.products.collectAsState()
     // Directly infer the refreshing state from the resource status.
@@ -175,7 +225,14 @@ fun Content(
             .pullRefresh(state = pullRefreshState),
 
         ) {
-
+        val filteredItems = if (lowercaseValue!="all")  {
+            dataState.data?.filter { item ->
+                item.categories.any { category -> category.name == lowercaseValue }
+            }
+        }
+        else{
+            dataState.data
+        }
 
         when (dataState.status) {
             Status.SUCCESS, Status.UPDATING -> {
@@ -197,20 +254,56 @@ fun Content(
                         // maxLineSpan
                         GridItemSpan(maxLineSpan)
                     }) {
-                        dataState.data?.let { HorizontalPagerWithIndicators(products = it, navcontroller = navController) }
+                      val filteredPager =  dataState.data?.filter { item ->
+                            item.categories.any { category -> category.name == "adidas" }
+                        }
+                        filteredPager?.let {
+                            HorizontalPagerWithIndicators(
+                                products = it,
+                                navcontroller = navController
+                            )
+                        }
                     }
                     item(span = {
                         // LazyGridItemSpanScope:
                         // maxLineSpan
                         GridItemSpan(maxLineSpan)
                     }) {
-                        SegmentedControl(modifier = Modifier)
+                        SegmentedControl(
+                            modifier = Modifier,
+                            onNikePressed = {
+                                currentShoeBrand.value = ShoeBrand.Nike
+                            },
+                            onAdidasPressed = {
+                                currentShoeBrand.value = ShoeBrand.Adidas
+                            },
+                            onGucciPressed = {
+                                currentShoeBrand.value = ShoeBrand.Gucci
+                            },
+                            onJordanPressed = {
+                                currentShoeBrand.value = ShoeBrand.Jordan
+                            },
+                            onReebokPressed = {
+                                currentShoeBrand.value = ShoeBrand.Reebok
+                            },
+                            onNewBalancedPressed = {
+                                currentShoeBrand.value = ShoeBrand.NewBalance
+                            },
+                            onPumaPressed = {
+                                currentShoeBrand.value = ShoeBrand.Puma
+                            },
+                            onAllPressed = {
+                                currentShoeBrand.value = ShoeBrand.All
+                            },
+                        )
 
                     }
                     item(span = {
                         // LazyGridItemSpanScope:
                         // maxLineSpan
-                        GridItemSpan(maxLineSpan)
+                        GridItemSpan(
+                            maxLineSpan,
+                        )
                     }) {
                         Text(
                             modifier = Modifier.padding(start = 16.dp),
@@ -223,7 +316,8 @@ fun Content(
                                 )
                         )
                     }
-                    dataState.data?.let { products ->
+
+                    filteredItems?.let { products ->
                         items(products.size) { shoeItem ->
 
                             Column(
@@ -232,25 +326,43 @@ fun Content(
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize(),
+                                    //      modifier = Modifier.fillMaxSize(),
                                 ) {
+
+
+                                    val isFilled2 =
+                                        productsViewModel.isProductFavorite(products[shoeItem].id)
+                                            .collectAsState()
+                                    var isFilled by remember { mutableStateOf(isFilled2.value) }
+                                    val icon: Painter =
+                                        if (isFilled) painterResource(id = R.drawable.favourite) else painterResource(
+                                            id = R.drawable.favorite_fill0_wght400_grad0_opsz24
+                                        )
+                                    val iconTint: Color = if (isFilled) Color.White else Color.White
+                                    val boxColor: Color =
+                                        if (isFilled) Color.Red else Color(0x99000000)
+
+
                                     Card(
                                         modifier = Modifier
                                             .padding(8.dp)
                                             .width(168.5.dp)
                                             .height(180.dp)
                                             .clickable(onClick = {
-                                                navController.navigate("details" + "?id=${products[shoeItem].id}&price=${products[shoeItem].currentPrice[0].NGN[0].toString()}")
-                                            }
-                                            ),
+
+                                            }),
                                         shape = RoundedCornerShape(8.dp),
-                                        colors = CardDefaults.cardColors(containerColor =  Color(0x66EAEAEA))
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(
+                                                0x66EAEAEA
+                                            )
+                                        )
                                     ) {
-
-
-
                                         AsyncImage(
                                             modifier = Modifier
+                                                .clickable {
+                                                    navController.navigate("details" + "?id=${products[shoeItem].id}&price=${products[shoeItem].currentPrice[0].NGN[0].toString()}")
+                                                }
                                                 .aspectRatio(1f)
                                                 .clip(shape = RoundedCornerShape(8.dp)),
                                             model = "https://api.timbu.cloud/images/${products[shoeItem].photos[0].url}",
@@ -258,42 +370,73 @@ fun Content(
                                         )
 
                                     }
-                                    var isFilled by remember { mutableStateOf(false) }
+                                    Box(modifier = Modifier
+                                        .clickable {
 
-                                    val icon: Painter = if (isFilled) painterResource(id = R.drawable.favourite) else painterResource(id = R.drawable.favorite_fill0_wght400_grad0_opsz24)
-                                    val iconTint: Color = if (isFilled) Color.Red else Color.White
-                                    val boxColor: Color = if (isFilled) Color.Red else Color(0x99000000)
+                                        }
+                                        .align(Alignment.TopEnd)
+                                        .offset(
+                                            x = (-8).dp,
+                                            y = 8.dp
+                                        ) // Adjust the offset for precise positioning
+                                        .size(48.dp)
+                                        .background(
+                                            color = Color.Transparent,
+                                            shape = RoundedCornerShape(size = 32.dp)
+                                        )) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clickable {
 
-                                    Box(
-                                        modifier = Modifier
-                                            .clickable {
-                                                isFilled = !isFilled
-                                            }
-                                            .align(Alignment.TopEnd)
-                                            .offset(x = (-20).dp, y = (16).dp)
-                                            .width(32.dp)
-                                            .height(32.dp)
-                                            .background(
-                                                color = boxColor,
-                                                shape = RoundedCornerShape(size = 32.dp)
+                                                }
+                                                .align(Alignment.Center)
+                                                .size(34.dp)
+                                                .background(
+                                                    color = boxColor,
+                                                    shape = RoundedCornerShape(size = 32.dp)
+                                                )
+
+
+                                        ) {
+
+                                            /*  Icon(
+                                    imageVector = if (favoriteState.value == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    modifier = Modifier.toggleable(
+                                        value = favoriteState.value ?: false,
+                                        onValueChange = { input ->
+                                            voiceJournalPreviewViewModel.onChangeFavourite(
+                                                change = input,
+                                                currentNote = currentNote
                                             )
+                                            favoriteState.value = input
+                                            // voiceJournalPreviewViewModel.getNotes()
+                                        }
 
-                                            .padding(
-                                                start = 6.4.dp,
-                                                top = 6.4.dp,
-                                                end = 6.4.dp,
-                                                bottom = 6.4.dp
+                                    ),  tint = if (favoriteState.value==true) Variables.SchemesError else Variables.SchemesOnPrimary
+                                    )*/
+                                            Icon(
+                                                painter = icon,
+                                                contentDescription = "",
+                                                tint = iconTint,
+                                                modifier = Modifier
+                                                    .align(Alignment.Center)
+                                                    .toggleable(
+                                                        value = isFilled ?: false,
+                                                        onValueChange = { input ->
+                                                            productsViewModel.onChangeFavourite(
+                                                                change = input,
+                                                                productId = products[shoeItem].id
+                                                            )
+                                                            isFilled = input
+                                                            // voiceJournalPreviewViewModel.getNotes()
+                                                        }
+                                                    )
                                             )
-                                    ) {
-
-
-                                       Icon(
-                                            painter = icon,
-                                            contentDescription = "",
-                                           tint = iconTint
-                                        )
+                                        }
                                     }
                                 }
+
                                 Row(
                                     modifier = Modifier
                                         .padding(start = 4.dp, end = 4.dp)
@@ -301,7 +444,7 @@ fun Content(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.Bottom,
 
-                                ) {
+                                    ) {
                                     Column(
                                         modifier = Modifier.padding(start = 16.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -327,7 +470,10 @@ fun Content(
                                                 height = 32.dp
                                             )
                                         )
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp,)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
                                             Image(
                                                 painter = painterResource(id = R.drawable.star_half),
                                                 contentDescription = "image description",
@@ -345,8 +491,8 @@ fun Content(
                                             )
                                         }
                                         Text(
-                                            text = "₦ "+products[shoeItem].currentPrice[0].NGN[0].toString(),
-                                            style =  TextStyle(
+                                            text = "₦ " + products[shoeItem].currentPrice[0].NGN[0].toString(),
+                                            style = TextStyle(
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight(600),
                                                 color = Color(0xFF0072C6),
@@ -356,9 +502,9 @@ fun Content(
                                             maxLines = 1
                                         )
                                         Text(
-                                            text ="₦ "+ (products[shoeItem].currentPrice[0].NGN[0].toString()
+                                            text = "₦ " + (products[shoeItem].currentPrice[0].NGN[0].toString()
                                                 .toDouble() + 2000).toString(),
-                                            style =TextStyle(
+                                            style = TextStyle(
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight(500),
                                                 color = Color(0xFF9D9D9D),
@@ -371,9 +517,9 @@ fun Content(
                                     }
 
                                     IconButton(
-                                       /* colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = Color(0x1F0072C6),
-                                        ),*/
+                                        /* colors = IconButtonDefaults.iconButtonColors(
+                                             containerColor = Color(0x1F0072C6),
+                                         ),*/
                                         onClick = {
                                             navController.navigate("details" + "?id=${products[shoeItem].id}&price=${products[shoeItem].currentPrice[0].NGN[0].toString()}")
                                         },
@@ -499,14 +645,18 @@ fun Content(
 
 // Default composable functions for loading and error states for modular error handling and UI updates
 @Composable
-fun DefaultErrorContent(message: String?, modifier: Modifier = Modifier,viewModel:ProductsViewModel) {
+fun DefaultErrorContent(
+    message: String?,
+    modifier: Modifier = Modifier,
+    viewModel: ProductsViewModel
+) {
     val retry = remember {
         mutableStateOf(false)
     }
     LaunchedEffect(retry.value) {
         viewModel.fetchProducts()
     }
-  Column(modifier = modifier)  {
+    Column(modifier = modifier) {
         androidx.compose.material.Text(
             text = message ?: "Error",
             textAlign = TextAlign.Center,
@@ -538,7 +688,17 @@ fun DefaultLoadingContent(modifier: Modifier = Modifier) {
 data class Logo(val painter: Painter, val name: String)
 
 @Composable
-fun SegmentedControl(modifier: Modifier) {
+fun SegmentedControl(
+    modifier: Modifier,
+    onNikePressed: () -> Unit,
+    onAdidasPressed: () -> Unit,
+    onGucciPressed: () -> Unit,
+    onJordanPressed: () -> Unit,
+    onReebokPressed: () -> Unit,
+    onNewBalancedPressed: () -> Unit,
+    onPumaPressed: () -> Unit,
+    onAllPressed: () -> Unit,
+) {
     val items = listOf(
         Logo(painterResource(R.drawable.nike_logo), "Nike"),
         Logo(painterResource(R.drawable.adidas_logo), "Adidas"),
@@ -549,7 +709,7 @@ fun SegmentedControl(modifier: Modifier) {
         Logo(painterResource(R.drawable.puma_logo), "Puma"),
         Logo(painterResource(R.drawable.view_all), " ")
     )
-    var selectedItemIndex by remember { mutableStateOf(0) }
+    var selectedItemIndex by remember { mutableStateOf(7) }
 
     Column(
         modifier = modifier
@@ -570,6 +730,24 @@ fun SegmentedControl(modifier: Modifier) {
                             modifier = Modifier
                                 .clickable {
                                     selectedItemIndex = index
+                                    when (index) {
+                                        0 -> {
+                                            onNikePressed()
+                                        }
+
+                                        1 -> {
+                                            onAdidasPressed()
+                                        }
+
+                                        2 -> {
+                                            onGucciPressed()
+                                        }
+
+                                        3 -> {
+                                            onJordanPressed()
+                                        }
+
+                                    }
                                 }
                                 .width(48.dp)
                                 .height(48.dp)
@@ -620,6 +798,23 @@ fun SegmentedControl(modifier: Modifier) {
                             modifier = Modifier
                                 .clickable {
                                     selectedItemIndex = index
+                                    when (index) {
+                                        4 -> {
+                                            onReebokPressed()
+                                        }
+
+                                        5 -> {
+                                            onNewBalancedPressed()
+                                        }
+
+                                        6 -> {
+                                            onPumaPressed()
+                                        }
+
+                                        7 -> {
+                                            onAllPressed()
+                                        }
+                                    }
                                 }
                                 .width(48.dp)
                                 .height(48.dp)
@@ -658,7 +853,7 @@ fun SegmentedControl(modifier: Modifier) {
 }
 
 @Composable
-fun HorizontalPagerWithIndicators(products: List<ResponseItem>,navcontroller: NavController) {
+fun HorizontalPagerWithIndicators(products: List<ResponseItem>, navcontroller: NavController) {
     val pagerState = rememberPagerState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -715,7 +910,7 @@ fun HorizontalPagerWithIndicators(products: List<ResponseItem>,navcontroller: Na
 }
 
 @Composable
-fun DisplayProduct(product: ResponseItem,navcontroller:NavController) {
+fun DisplayProduct(product: ResponseItem, navcontroller: NavController) {
     val gradient = Brush.linearGradient(
         colors = listOf(Color(0xff0072C6), Color(0xff003760)), // Specify your gradient colors
 
@@ -733,14 +928,12 @@ fun DisplayProduct(product: ResponseItem,navcontroller:NavController) {
         ) {
             Text(
                 text = product.name + " ₦ ${product.currentPrice[0].NGN[0]}",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight(600),
+                    color = Color(0xFFEAEAEA),
 
-                    .padding(8.dp)
-                    .background(Color.Black)
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
             )
             Button(
                 onClick = { navcontroller.navigate("cart") }, modifier = Modifier
@@ -802,7 +995,7 @@ fun UserGreetings() {
         )
         {
             Text(
-                text = "Ada Dennis".getOrNull(0).toString()
+                text = "Hello".getOrNull(0).toString()
                     .toUpperCase(Locale.getDefault()),
                 style = TextStyle(
                     fontSize = 19.sp,
@@ -818,7 +1011,7 @@ fun UserGreetings() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Good afternoon 👋🏽",
+                text = "Welcome 👋🏽",
 // Text/lg: Regular
                 style = TextStyle(
                     fontSize = 15.sp,
@@ -827,7 +1020,7 @@ fun UserGreetings() {
 
                     )
             )
-            Text(
+           /* Text(
                 text = "Ada Dennis",
 // Heading/H4: Medium
                 style = TextStyle(
@@ -836,7 +1029,7 @@ fun UserGreetings() {
                     color = Color(0xFF2A2A2A),
 
                     )
-            )
+            )*/
         }
     }
     Spacer(modifier = Modifier.padding(8.dp))

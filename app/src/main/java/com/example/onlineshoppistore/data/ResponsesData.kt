@@ -29,7 +29,7 @@ data class ResponseItem(
     @SerializedName("organization_id") val organizationId: String,
     @SerializedName("stock_id") val stockId: Any?,
     @SerializedName("product_image") val productImage: List<Any>,
-    val categories: List<Any>,
+    val categories: List<Category>,
     @SerializedName("date_created") val dateCreated: String,
     @SerializedName("last_updated") val lastUpdated: String,
     @SerializedName("user_id") val userId: String,
@@ -58,6 +58,21 @@ data class Photo(
     @SerializedName("is_public") val isPublic: Boolean,
     @SerializedName("file_rename") val fileRename: Boolean,
     val position: Int
+)
+data class Category(
+    val organization_id: String,
+    val name: String,
+    val position: Int?,
+    val category_type: String,
+    val description: String,
+    val last_updated: String,
+    val id: String,
+    val parent_id: String?,
+    val url_slug: String?,
+    val is_deleted: Boolean,
+    val date_created: String,
+    val subcategories: List<Any>,
+    val parents: List<Any>
 )
 
 data class CurrentPrice(

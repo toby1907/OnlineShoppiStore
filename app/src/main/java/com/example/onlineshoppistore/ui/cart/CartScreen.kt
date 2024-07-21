@@ -1,4 +1,4 @@
-package com.example.onlineshoppistore.ui
+package com.example.onlineshoppistore.ui.cart
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,18 +9,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +30,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,41 +45,69 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.onlineshoppistore.R
+import com.example.onlineshoppistore.data.room.CartItem
+import com.example.onlineshoppistore.ui.cart.components.PersonalInfoSection
+import com.example.onlineshoppistore.ui.components.EmptyCartScreen
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CartScreen(navController: NavController){
+fun CartScreen(navController: NavController,navController2: NavController){
+    val viewModel: CartScreenViewModel = hiltViewModel()
+    val cartItems = viewModel.cartItems.collectAsState().value
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        TopAppBar(navigationIcon = {
+            IconButton(onClick = { navController.navigateUp() }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.arrow_left_02),
+                    contentDescription = ""
+                )
+            }
+        },
+            title = {
+                Text(
+                    text = "My Cart",
 
-  Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize())  {
-      TopAppBar(navigationIcon = {
-         IconButton(onClick = {navController.navigateUp() }) {
-              Icon(
-                  painter = painterResource(id = R.drawable.arrow_left_02),
-                  contentDescription = ""
-              )
-          }
-      },
-          title = { Text(
-              text = "My Cart",
+                    // Heading/H4: SemiBold
+                    style = TextStyle(
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight(600),
+                        color = Color(0xFF292929),
+                    )
+                )
+            })
+        LazyColumn {
+         if (cartItems.isNotEmpty())   {
+                items(cartItems) { cartItem ->
 
-              // Heading/H4: SemiBold
-              style = TextStyle(
-                  fontSize = 19.sp,
-                  fontWeight = FontWeight(600),
-                  color = Color(0xFF292929),
-              )
-          ) })
-      CartItem()
-      CartItem()
-      Spacer(modifier = Modifier.size(68.dp))
-      Footer2(navController =navController, )
+                    com.example.onlineshoppistore.ui.cart.CartItem(
+                        cartItem = cartItem,
+                        viewModel = viewModel,
+                        navController = navController
+                    )
 
+                }
+             item {
+                 Spacer(modifier = Modifier.size(68.dp))
+                 Footer2(navController = navController, cartItems)
+             }
+            }
+            else{
+                item {
+                    EmptyCartScreen(navController2)
+                }
+         }
+        }
     }
-
 }
 @Composable
-fun CartItem(){
+fun CartItem(cartItem: CartItem,viewModel: CartScreenViewModel,navController: NavController){
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp,Alignment.Start),
@@ -84,6 +119,9 @@ fun CartItem(){
                 shape = RoundedCornerShape(size = 8.dp)
             )
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+            .clickable {
+                navController.navigate("details" + "?id=${cartItem.id}&price=${cartItem.price}")
+            }
     ) {
         Card(
             modifier = Modifier
@@ -92,14 +130,14 @@ fun CartItem(){
                 .background(color = Color(0x66EAEAEA), shape = RoundedCornerShape(size = 8.dp))
         ) {
             Box(modifier = Modifier.fillMaxSize())  {
-                Image(
+                AsyncImage(
                     modifier = Modifier
                         .width(80.dp)
                         .height(50.dp)
                         .align(Alignment.Center)
-                    ,
-                    painter = painterResource(id = R.drawable.shoe1),
-                    contentDescription = "shoe"
+                        .clip(shape = RoundedCornerShape(8.dp)),
+                    model = "https://api.timbu.cloud/images/${cartItem.imageUrl}",
+                    contentDescription = null,
                 )
             }
         }
@@ -113,7 +151,7 @@ fun CartItem(){
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Ego Raid",
+                    text = cartItem.name,
 // Text/lg: Medium
                     style = TextStyle(
                         fontSize = 15.sp,
@@ -123,7 +161,13 @@ fun CartItem(){
                         )
                 )
                 Icon(
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clickable {
+                            viewModel.deleteItem(cartItem.id)
+                        }
+
+                    ,
                     painter = painterResource(id = R.drawable.close_fill0_wght400_grad0_opsz24),
                     contentDescription = ""
                 )
@@ -136,7 +180,7 @@ fun CartItem(){
                             .width(20.dp)
                             .height(20.dp)
                             .background(
-                                color = Color(0xFF2A2A2A),
+                                color = Color(cartItem.color),
                                 shape = RoundedCornerShape(size = 4.dp)
                             )
 
@@ -145,7 +189,8 @@ fun CartItem(){
                     ) {
 
                     }
-                    Text(
+                  //create a enum class for the color
+                    /* Text(
                         text = "Black",
 // Text/md: Regular
                         style = TextStyle(
@@ -154,7 +199,7 @@ fun CartItem(){
                             color = Color(0xFF555555),
 
                             )
-                    )
+                    )*/
                 }
                 Divider(
                     Modifier
@@ -165,7 +210,7 @@ fun CartItem(){
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Size",
+                        text = "Size ",
 // Text/lg: Regular
                         style = TextStyle(
                             fontSize = 15.sp,
@@ -175,7 +220,7 @@ fun CartItem(){
                             )
                     )
                     Text(
-                        text = " 39",
+                        text = cartItem.size.toString(),
 // Text/lg: Regular
                         style = TextStyle(
                             fontSize = 15.sp,
@@ -187,53 +232,10 @@ fun CartItem(){
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    androidx.compose.material.Icon(
-                        painter = painterResource(id = R.drawable.minus_sign),
-                        contentDescription = "Decrease Quantity",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .size(16.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .width(25.dp)
-                            .height(26.dp)
-                            .background(
-                                color = Color(0x1F0072C6),
-                                shape = RoundedCornerShape(size = 2.dp)
-                            )
-
-
-                    ) {
-                        androidx.compose.material.Text(
-                            modifier = Modifier.align(Alignment.Center),
-                            text = "1",
-                            style = TextStyle(
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight(400),
-                                color = Color(0xFF2A2A2A),
-
-                                )
-                        )
-                    }
-                    androidx.compose.material.Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Increase Quantity",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clickable {
-                            }
-                    )
-                }
+                // quatity
+                CartItemRow(cartItem = cartItem, viewModel = viewModel)
                 Text(
-                    text = "₦ 37,000.00",
+                    text = cartItem.price,
 // Text/lg: Medium
                     style = TextStyle(
                         fontSize = 15.sp,
@@ -246,12 +248,79 @@ fun CartItem(){
         }
     }
 }
+@Composable
+fun CartItemRow(cartItem: CartItem, viewModel: CartScreenViewModel) {
+    var quantity by remember { mutableStateOf(cartItem.quantity) }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        // Minus Icon
+        androidx.compose.material.Icon(
+            painter = painterResource(id = R.drawable.minus_sign),
+            contentDescription = "Decrease Quantity",
+            tint = Color.Gray,
+            modifier = Modifier
+                .size(16.dp)
+                .clickable {
+                    if (quantity > 1) {
+                        // Decrease quantity
+                        quantity--
+                        viewModel.updateCartItemQuantity(cartItem.id, cartItem.quantity - 1)
+                    }
+                }
+        )
+
+        // Quantity Display
+        Box(
+            modifier = Modifier
+                .width(25.dp)
+                .height(26.dp)
+                .background(
+                    color = Color(0x1F0072C6),
+                    shape = RoundedCornerShape(size = 2.dp)
+                )
+        ) {
+            androidx.compose.material.Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = quantity.toString(),
+                style = TextStyle(
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight(400),
+                    color = Color(0xFF2A2A2A),
+                )
+            )
+        }
+
+        // Plus Icon
+        androidx.compose.material.Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Increase Quantity",
+            tint = Color.Gray,
+            modifier = Modifier
+                .size(16.dp)
+                .clickable {
+                    // Increase quantity
+                    if (quantity < 10) {
+
+                    quantity++
+                    viewModel.updateCartItemQuantity(cartItem.id, cartItem.quantity + 1)
+                    }
+                }
+        )
+    }
+}
+
+
 
 @Composable
-fun  Footer2(navController: NavController){
+fun  Footer2(navController: NavController,cartItems:List<CartItem>){
+    val totalPrice = cartItems.sumOf { it.itemTotalPrice*it.quantity }
     Row(verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.padding(8.dp)
+        modifier = Modifier
+            .padding(8.dp)
             .fillMaxWidth()
     ){
         Column(
@@ -269,7 +338,7 @@ fun  Footer2(navController: NavController){
                     )
             )
             androidx.compose.material.Text(
-                text = "₦ 37,000.00",
+                text = "₦ $totalPrice",
 // Heading/H4: Medium
                 style = TextStyle(
                     fontSize = 19.sp,
@@ -287,7 +356,7 @@ fun  Footer2(navController: NavController){
                     contentColor = Color.White
                 ),
             shape = RoundedCornerShape(size = 8.dp),
-            onClick = { navController.navigate("info") }) {
+            onClick = { navController.navigate("checkout") }) {
             androidx.compose.material.Icon(painter = painterResource(id = R.drawable.cart_icon), contentDescription ="" )
             Spacer(modifier = Modifier.size(8.dp))
             androidx.compose.material.Text(

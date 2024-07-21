@@ -1,4 +1,5 @@
-package com.example.onlineshoppistore.ui
+package com.example.onlineshoppistore.ui.detail
+/*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -43,7 +44,7 @@ import com.example.onlineshoppistore.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(navController: NavController){
-    val viewModel:DetailScreenViewModel = hiltViewModel()
+    val viewModel: DetailScreenViewModel = hiltViewModel()
 
     Scaffold(
         topBar = {
@@ -204,4 +205,4 @@ Spacer(modifier = Modifier.size(8.dp))
 
         }
     }
-}
+}*/

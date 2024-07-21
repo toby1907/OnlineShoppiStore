@@ -1,12 +1,12 @@
-package com.example.onlineshoppistore.ui
+package com.example.onlineshoppistore.ui.detail
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,13 +45,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.onlineshoppistore.R
@@ -68,39 +69,80 @@ import com.example.onlineshoppistore.data.Photo
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductPage(navController: NavController) {
     val viewModel: DetailScreenViewModel = hiltViewModel()
+    val product = viewModel.productState.collectAsState().value
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                DetailScreenViewModel.UiEvent.Loading -> {
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    )
-    {
+                }
 
-        NewProductContent(modifier = Modifier, viewModel=viewModel, navController = navController)
-        TopAppBar(
-            modifier = Modifier.align(Alignment.TopStart),title = { }, navigationIcon = {
-            IconButton(
-                onClick = {navController.navigateUp()},
+                DetailScreenViewModel.UiEvent.SavedCartItem -> {
+                    navController.navigate("cart")
+                }
 
-            ) {
-                Icon(painter = painterResource(id = R.drawable.arrow_left_02), contentDescription = "")
+                is DetailScreenViewModel.UiEvent.ShowSnackbar -> {
+
+                }
+
+                DetailScreenViewModel.UiEvent.Success -> {
+
+                }
             }
-        },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent
-            ))
+
+        }
     }
+
+
+    Scaffold(topBar = {
+        TopAppBar(
+            title = {
+                Text(text = "Details")
+            }, navigationIcon = {
+                IconButton(
+                    onClick = { navController.navigateUp() },
+
+                    ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.arrow_left_02),
+                        contentDescription = ""
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.White
+            )
+        )
+    },
+        bottomBar = {
+            Footer( product.price, viewModel = viewModel)
+        }
+    ) { it ->
+
+        NewProductContent(
+            modifier = Modifier.padding(it),
+            viewModel = viewModel,
+            navController = navController,
+        )
+
+    }
+
 
 }
 
 @Composable
-fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navController: NavController) {
+fun NewProductContent(
+    modifier: Modifier,
+    viewModel: DetailScreenViewModel,
+    navController: NavController,
+) {
     val product = viewModel.productState.collectAsState().value
     val errorState = viewModel.productError.collectAsState().value
     val loadingState = viewModel.productloading.collectAsState().value
@@ -140,13 +182,14 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize(),
-            columns = GridCells.Fixed(2)) {
+            columns = GridCells.Fixed(2)
+        ) {
             item(span = {
                 // LazyGridItemSpanScope:
                 // maxLineSpan
                 GridItemSpan(maxLineSpan)
             }) {
-                
+
 
                 SneakerImageCarousel(photos = product.imageUrl)
 
@@ -157,11 +200,13 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                 GridItemSpan(maxLineSpan)
             }) {
 
-            Spacer(modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.size(16.dp))
                 ProductTitleSection(
                     title = product.name,
                     price = product.price,
-                    rating = 4.5f
+                    rating = 4.5f,
+                    viewModel = viewModel,
+                    productId = product.id
                 )
             }
             item(span = {
@@ -170,7 +215,7 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                 GridItemSpan(maxLineSpan)
             }) {
 
-            Spacer(modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.size(16.dp))
                 DescriptionReviewsTabs(
                     product.description
                 )
@@ -181,14 +226,17 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                 GridItemSpan(maxLineSpan)
             }) {
 
-            Spacer(modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.size(16.dp))
                 val sizes = listOf(38, 39, 40, 42, 45)
-                var selectedSize by remember { mutableStateOf<Int?>(39) }
+                var selectedSize by remember { mutableStateOf<Int?>(viewModel.sizeState.value.size) }
 
                 SizePicker(
                     sizes = sizes,
                     selectedSize = selectedSize,
-                    onSizeSelected = { selectedSize = it }
+                    onSizeSelected = {
+                        selectedSize = it
+                        viewModel.onEvent(DetailScreenEvent.EnteredSize(it))
+                    }
                 )
             }
 
@@ -199,14 +247,22 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                 GridItemSpan(maxLineSpan)
             }) {
 
-            Spacer(modifier = Modifier.size(16.dp))
-                val colors = listOf(Color(0xFFFFA500), Color(0xFF9747FF), Color(0xFF09C53B), Color(0xFF141B34))
-                var selectedColor by remember { mutableStateOf<Color?>(Color(0xFFFFA500)) }
+                Spacer(modifier = Modifier.size(16.dp))
+                val colors = listOf(
+                    Color(0xFFFFA500),
+                    Color(0xFF9747FF),
+                    Color(0xFF09C53B),
+                    Color(0xFF141B34)
+                )
+                var selectedColor by remember { mutableStateOf<Color?>(Color(viewModel.colorState.value.color)) }
 
                 ColorPicker(
                     colors = colors,
                     selectedColor = selectedColor,
-                    onColorSelected = { selectedColor = it }
+                    onColorSelected = {
+                        selectedColor = it
+                        viewModel.onEvent(DetailScreenEvent.ChangeColor(it.toArgb()))
+                    }
                 )
             }
             item(span = {
@@ -217,8 +273,9 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
 
 
                 QuantitySelector(
-                    initialQuantity = 1,
+                    initialQuantity = viewModel.quantityState.value.quantity,
                     onQuantityChanged = {
+                        viewModel.onEvent(DetailScreenEvent.EnteredQuatity(it))
                     }
                 )
             }
@@ -253,22 +310,37 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize(),
+                            //      modifier = Modifier.fillMaxSize(),
                         ) {
+
+
+                            val isFilled2 =
+                                viewModel.isProductFavorite(products[shoeItem].id).collectAsState()
+                            var isFilled by remember { mutableStateOf(isFilled2.value) }
+                            val icon: Painter =
+                                if (isFilled) painterResource(id = R.drawable.favourite) else painterResource(
+                                    id = R.drawable.favorite_fill0_wght400_grad0_opsz24
+                                )
+                            val iconTint: Color = if (isFilled) Color.White else Color.White
+                            val boxColor: Color = if (isFilled) Color.Red else Color(0x99000000)
+
+
                             Card(
                                 modifier = Modifier
                                     .padding(8.dp)
                                     .width(168.5.dp)
                                     .height(180.dp)
                                     .clickable(onClick = {
-                                        navController.navigate("details" + "?id=${products[shoeItem].id}&price=${products[shoeItem].currentPrice[0].NGN[0].toString()}")
-                                    }
-                                    ),
+
+                                    }),
                                 shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.cardColors(containerColor =  Color(0x66EAEAEA))
+                                colors = CardDefaults.cardColors(containerColor = Color(0x66EAEAEA))
                             ) {
                                 AsyncImage(
                                     modifier = Modifier
+                                        .clickable {
+                                            navController.navigate("details" + "?id=${products[shoeItem].id}&price=${products[shoeItem].currentPrice[0].NGN[0].toString()}")
+                                        }
                                         .aspectRatio(1f)
                                         .clip(shape = RoundedCornerShape(8.dp)),
                                     model = "https://api.timbu.cloud/images/${products[shoeItem].photos[0].url}",
@@ -276,32 +348,73 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                                 )
 
                             }
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = (-20).dp, y = (16).dp)
-                                    .width(32.dp)
-                                    .height(32.dp)
-                                    .background(
-                                        color = Color(0x99000000),
-                                        shape = RoundedCornerShape(size = 32.dp)
-                                    )
+                            Box(modifier = Modifier
+                                .clickable {
 
-                                    .padding(
-                                        start = 6.4.dp,
-                                        top = 6.4.dp,
-                                        end = 6.4.dp,
-                                        bottom = 6.4.dp
-                                    )
-                            ) {
+                                }
+                                .align(Alignment.TopEnd)
+                                .offset(
+                                    x = (-8).dp,
+                                    y = 8.dp
+                                ) // Adjust the offset for precise positioning
+                                .size(48.dp)
+                                .background(
+                                    color = Color.Transparent,
+                                    shape = RoundedCornerShape(size = 32.dp)
+                                )) {
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
 
-                                androidx.compose.material3.Icon(
-                                    painter = painterResource(id = R.drawable.favorite_fill0_wght400_grad0_opsz24),
-                                    contentDescription = "",
-                                    tint = Color.White
-                                )
+                                        }
+                                        .align(Alignment.Center)
+                                        .size(34.dp)
+                                        .background(
+                                            color = boxColor,
+                                            shape = RoundedCornerShape(size = 32.dp)
+                                        )
+
+
+                                ) {
+
+                                    /*  Icon(
+                            imageVector = if (favoriteState.value == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            modifier = Modifier.toggleable(
+                                value = favoriteState.value ?: false,
+                                onValueChange = { input ->
+                                    voiceJournalPreviewViewModel.onChangeFavourite(
+                                        change = input,
+                                        currentNote = currentNote
+                                    )
+                                    favoriteState.value = input
+                                    // voiceJournalPreviewViewModel.getNotes()
+                                }
+
+                            ),  tint = if (favoriteState.value==true) Variables.SchemesError else Variables.SchemesOnPrimary
+                            )*/
+                                    androidx.compose.material3.Icon(
+                                        painter = icon,
+                                        contentDescription = "",
+                                        tint = iconTint,
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .toggleable(
+                                                value = isFilled ?: false,
+                                                onValueChange = { input ->
+                                                    viewModel.onChangeFavourite(
+                                                        change = input,
+                                                        productId = products[shoeItem].id
+                                                    )
+                                                    isFilled = input
+                                                    // voiceJournalPreviewViewModel.getNotes()
+                                                }
+                                            )
+                                    )
+                                }
                             }
                         }
+
                         Row(
                             modifier = Modifier
                                 .padding(start = 4.dp, end = 4.dp)
@@ -335,7 +448,10 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
                                         height = 32.dp
                                     )
                                 )
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp,)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
                                     Image(
                                         painter = painterResource(id = R.drawable.star_half),
                                         contentDescription = "image description",
@@ -414,17 +530,9 @@ fun NewProductContent(modifier: Modifier, viewModel: DetailScreenViewModel,navCo
 
                 }
             }
-            item(span = {
-                // LazyGridItemSpanScope:
-                // maxLineSpan
-                GridItemSpan(maxLineSpan)
-            }) {
-
-                Footer(navController = navController,product.price)
-            }
 
 
-            }
+        }
 
     }
 }
@@ -507,11 +615,25 @@ fun FetchPhotoFromUrl(imageUrl: String) {
 }
 
 @Composable
-fun ProductTitleSection(title: String, price: String, rating: Float) {
-    Column(verticalArrangement = Arrangement.SpaceBetween,
+fun ProductTitleSection(
+    title: String,
+    price: String, rating: Float,
+    viewModel: DetailScreenViewModel,
+    productId: String
+) {
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
         modifier = Modifier.padding(start = 8.dp)
-    ){
+    ) {
+        val isFilled2 = viewModel.isProductFavorite(productId).collectAsState()
+        Log.d("isFilled", "$isFilled2.value")
+        var isFilled by remember { mutableStateOf(isFilled2.value) }
+        val icon: Painter =
+            if (isFilled) painterResource(id = R.drawable.favourite) else painterResource(id = R.drawable.favorite_fill0_wght400_grad0_opsz24)
+        val iconTint: Color = if (isFilled) Color.White else Color.White
+        val boxColor: Color = if (isFilled) Color.Red else Color(0x99000000)
+
         Spacer(modifier = Modifier.size(16.dp))
         Text(
             text = "Iconic Casual Brands",
@@ -538,16 +660,28 @@ fun ProductTitleSection(title: String, price: String, rating: Float) {
                 modifier = Modifier
                     .width(30.8.dp)
                     .height(30.8.dp)
-                    .background(color = Color(0xFFD42620), shape = RoundedCornerShape(size = 32.dp))
+                    .background(color = boxColor, shape = RoundedCornerShape(size = 32.dp))
                     .padding(start = 6.4.dp, top = 6.4.dp, end = 6.4.dp, bottom = 6.4.dp)
 
             ) {
 
                 androidx.compose.material3.Icon(
-                    modifier = Modifier.align(Alignment.Center),
-                    painter = painterResource(id = R.drawable.favourite),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .toggleable(
+                            value = isFilled ?: false,
+                            onValueChange = { input ->
+                                viewModel.onChangeFavourite(
+                                    change = input,
+                                    productId = productId
+                                )
+                                isFilled = input
+                                // voiceJournalPreviewViewModel.getNotes()
+                            }
+                        ),
+                    painter = icon,
                     contentDescription = "",
-                    tint = Color.White
+                    tint = iconTint
                 )
             }
         }
@@ -593,65 +727,62 @@ fun ProductTitleSection(title: String, price: String, rating: Float) {
 }
 
 
+@Composable
+fun SizePicker(
+    sizes: List<Int>,
+    selectedSize: Int?,
+    onSizeSelected: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.Start) {
+        Text(
+            text = "Size",
 
-
-            @Composable
-            fun SizePicker(
-                sizes: List<Int>,
-                selectedSize: Int?,
-                onSizeSelected: (Int) -> Unit
-            ) {
-                Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.Start){
-                    Text(
-                        text = "Size",
-
-                        // Text/lg: Medium
-                        style = TextStyle(
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight(500),
-                            color = Color(0xFF2A2A2A),
-                        )
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        sizes.forEach { size ->
-                            SizeItem(
-                                size = size,
-                                isSelected = size == selectedSize,
-                                onClick = { onSizeSelected(size) }
-                            )
-                        }
-                    }
-                }
-            }
-
-    @Composable
-    fun SizeItem(
-        size: Int,
-        isSelected: Boolean,
-        onClick: () -> Unit
-    ) {
-        Box(
-            modifier = Modifier
-                .size(60.dp, 40.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(if (isSelected) Color(0xFF0072C6) else Color(0xFFF9F9F9))
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = size.toString(),
-                color = if (isSelected) Color.White else Color(0xff555555),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+            // Text/lg: Medium
+            style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight(500),
+                color = Color(0xFF2A2A2A),
             )
-
+        )
+        Spacer(modifier = Modifier.size(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            sizes.forEach { size ->
+                SizeItem(
+                    size = size,
+                    isSelected = size == selectedSize,
+                    onClick = { onSizeSelected(size) }
+                )
+            }
         }
     }
+}
 
+@Composable
+fun SizeItem(
+    size: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(60.dp, 40.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(if (isSelected) Color(0xFF0072C6) else Color(0xFFF9F9F9))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = size.toString(),
+            color = if (isSelected) Color.White else Color(0xff555555),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+    }
+}
 
 
 @Composable
@@ -661,21 +792,22 @@ fun QuantitySelector(
 ) {
     var quantity by remember { mutableStateOf(initialQuantity) }
 
-    Column(verticalArrangement = Arrangement.SpaceBetween,
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
         modifier = Modifier.padding(start = 8.dp)
-    ){
+    ) {
         Spacer(modifier = Modifier.size(16.dp))
-       Text(
-           text = "Quantity",
+        Text(
+            text = "Quantity",
 
-           // Text/lg: Medium
-           style = TextStyle(
-               fontSize = 15.sp,
-               fontWeight = FontWeight(500),
-               color = Color(0xFF2A2A2A),
-           )
-       )
+            // Text/lg: Medium
+            style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight(500),
+                color = Color(0xFF2A2A2A),
+            )
+        )
         Spacer(modifier = Modifier.size(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -731,17 +863,13 @@ fun QuantitySelector(
 }
 
 
-
-
-
-
 @Composable
 fun ColorPicker(
     colors: List<Color>,
     selectedColor: Color?,
     onColorSelected: (Color) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.Start){
+    Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.Start) {
         Text(
             text = "Colours",
 // Text/lg: Medium
@@ -795,10 +923,11 @@ fun ColorItem(
 
 @Composable
 fun DescriptionReviewsTabs(description: String) {
-    Column(verticalArrangement = Arrangement.SpaceBetween,
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
         modifier = Modifier.padding(start = 8.dp, top = 8.dp)
-    ){
+    ) {
         Spacer(modifier = Modifier.size(16.dp))
 
         Text(
@@ -829,11 +958,19 @@ fun DescriptionReviewsTabs(description: String) {
 }
 
 @Composable
-fun  Footer(navController: NavController,price: String){
-    Row(verticalAlignment = Alignment.CenterVertically,
+fun Footer( price: String, viewModel: DetailScreenViewModel) {
+    val totalPrice = if (price.isNotEmpty()) {
+        price.toDouble() * viewModel.quantityState.value.quantity
+    } else {
+        0.0
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.padding(8.dp)
-        ){
+        modifier = Modifier.padding(start=8.dp, end = 8.dp)
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -849,7 +986,7 @@ fun  Footer(navController: NavController,price: String){
                     )
             )
             Text(
-                text = "₦ $price",
+                text = "₦ $totalPrice",
 // Heading/H4: Medium
                 style = TextStyle(
                     fontSize = 19.sp,
@@ -861,15 +998,14 @@ fun  Footer(navController: NavController,price: String){
         }
         Button(modifier = Modifier
             .width(141.dp)
-            .height(42.dp)
-            ,
+            .height(42.dp),
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Color(0xFF0072C6),
                 contentColor = Color.White
             ),
             shape = RoundedCornerShape(size = 8.dp),
-             onClick = { navController.navigate("cart") }) {
-            Icon(painter = painterResource(id = R.drawable.cart_icon), contentDescription ="" )
+            onClick = { viewModel.onEvent(DetailScreenEvent.SaveProduct) }) {
+            Icon(painter = painterResource(id = R.drawable.cart_icon), contentDescription = "")
             Spacer(modifier = Modifier.size(8.dp))
             Text(
                 text = "Add to Cart",

@@ -2,12 +2,20 @@ package com.example.onlineshoppistore.di
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.room.Room
+import com.example.onlineshoppistore.data.datastore.FavoriteDataStore
+import com.example.onlineshoppistore.data.room.CartDatabase
+import com.example.onlineshoppistore.data.room.CartRepositoryImpl
+import com.example.onlineshoppistore.dataStore
 import com.example.onlineshoppistore.network.ApiRepository
 import com.example.onlineshoppistore.network.ApiService
 import com.example.onlineshoppistore.network.ServiceBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -38,6 +46,31 @@ class AppModule {
         @Singleton
         fun provideCharacterRepository(apiService: ApiService): ApiRepository {
             return ApiRepository(apiService)
+        }
+
+        @Provides
+        @Singleton
+        fun provideGoalDatabase(app: Application): CartDatabase {
+            return Room.databaseBuilder(app.applicationContext, CartDatabase::class.java, "cart_database")
+                .build()
+        }
+
+        @Provides
+        @Singleton
+        fun provideGoalRepository(db: CartDatabase): CartRepositoryImpl {
+            return CartRepositoryImpl(db.cartDao())
+        }
+
+        @Provides
+        @Singleton
+        fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
+            return context.dataStore
+        }
+
+        @Provides
+        @Singleton
+        fun provideSettingsRepository(dataStore: DataStore<Preferences>): FavoriteDataStore {
+            return FavoriteDataStore(dataStore)
         }
     }
 

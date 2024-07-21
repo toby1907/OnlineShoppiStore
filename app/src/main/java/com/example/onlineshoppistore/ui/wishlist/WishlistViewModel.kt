@@ -1,6 +1,5 @@
-package com.example.onlineshoppistore.ui
+package com.example.onlineshoppistore.ui.wishlist
 
-import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.onlineshoppistore.data.ResponseItem
@@ -12,7 +11,6 @@ import com.example.onlineshoppistore.network.Status
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,15 +18,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ProductsViewModel @Inject constructor(private val apiRepository: ApiRepository,
-    private val favoriteDataStore: FavoriteDataStore) : ViewModel() {
+class WishlistViewModel @Inject constructor(private val apiRepository: ApiRepository,
+                                            private val favoriteDataStore: FavoriteDataStore
+) : ViewModel() {
 
     // StateFlow mechanism to observe characters data state from the UI layer
     private val _products: MutableStateFlow<DataState<List<ResponseItem>>> =
         MutableStateFlow(DataState.loading(data = null))
     val products = _products.asStateFlow()
-    private val _favoriteItems:MutableStateFlow<List<FavoriteItem>>  = MutableStateFlow(emptyList())
-val favoriteItem = _favoriteItems.asStateFlow()
+    private val _favoriteItems: MutableStateFlow<List<FavoriteItem>> = MutableStateFlow(emptyList())
+    val favoriteItem = _favoriteItems.asStateFlow()
 
 
 
@@ -36,6 +35,7 @@ val favoriteItem = _favoriteItems.asStateFlow()
 
     init {
         fetchProducts() // Initial data fetch
+        getFavoriteItems()
     }
 
     // Handles fetching characters from the repository and updating UI state accordingly
@@ -49,6 +49,7 @@ val favoriteItem = _favoriteItems.asStateFlow()
                 delay(1000)
             }
             apiRepository.getProducts().collect {
+
                 _products.value = it
             }
         }
@@ -58,9 +59,9 @@ val favoriteItem = _favoriteItems.asStateFlow()
         val isFavoriteFlow = MutableStateFlow(false)
 
         viewModelScope.launch {
-        //    val favoriteItems = getFavoriteItems() // Replace with the actual function call
+            //    val favoriteItems = getFavoriteItems() // Replace with the actual function call
             favoriteDataStore.getFavoriteItemsFlow().collect{
-            //    _favoriteItems.value = it
+                //   _favoriteItems.value = it
                 isFavoriteFlow.value = it.contains(FavoriteItem(uniqueId))
 
             }
@@ -84,7 +85,19 @@ val favoriteItem = _favoriteItems.asStateFlow()
 
 
     }
+fun getFavoriteItems(){
+    viewModelScope.launch {
+        //    val favoriteItems = getFavoriteItems() // Replace with the actual function call
+        favoriteDataStore.getFavoriteItemsFlow().collect{
+              _favoriteItems.value = it
+        //    isFavoriteFlow.value = it.contains(FavoriteItem(uniqueId))
 
+        }
+
+    }
+
+
+}
 
 
 }
