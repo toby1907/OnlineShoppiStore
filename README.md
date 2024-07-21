@@ -16,9 +16,9 @@
             <li>Customize the looks as able</li>
         </ol>
         <h2>Screenshots</h2>
-        <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store1.png" alt="Screenshot 1"> 
-       <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store2.png" alt="Screenshot 2"> 
-         <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store3.png" alt="Screenshot 3"> 
+        <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store1.jpg" alt="Screenshot 1"> 
+       <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store2.jpg" alt="Screenshot 2"> 
+         <img src="https://github.com/toby1907/OnlineShoppiStore/blob/main/app/src/main/res/drawable/store3.jpg" alt="Screenshot 3"> 
         <!-- Add more screenshots as needed -->
         <h2>Download</h2>
         <p>You can download the app from the following link:</p>
