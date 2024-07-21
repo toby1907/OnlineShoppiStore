@@ -22,7 +22,7 @@
         <!-- Add more screenshots as needed -->
         <h2>Download</h2>
         <p>You can download the app from the following link:</p>
-        <a href="https://github.com/toby1907/OnlineShoppiStore/releases/tag/v1.0.0-alpha">Download Shoppi App</a>
+        <a href="https://github.com/toby1907/OnlineShoppiStore/releases/tag/v1.0.0-beta">Download Shoppi App</a>
 </div>
 
 
