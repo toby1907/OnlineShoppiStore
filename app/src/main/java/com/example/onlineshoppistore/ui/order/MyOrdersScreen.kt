@@ -83,7 +83,7 @@ fun MyOrderScreen(navController: NavController,navController2: NavController) {
         when (state) {
             0 -> {
                 if (orderlist.value.isEmpty()) {
-                    EmptyOrdersScreen(navController = navController)
+                    EmptyOrdersScreen(navController = navController2)
                 } else {
 
                     LazyColumn {
